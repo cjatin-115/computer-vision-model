@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local recordings & video dumps
+recordings/
+*.mp4
+*.avi
+
+# Logs and outputs
+logs/
+log.txt
+
+# Model weight binaries (downloaded automatically if missing)
+yolov8n.pt
+*.pt
+*.onnx
+*.engine
+
+# Virtual environments & IDEs
+.venv/
+venv/
+ENV/
+.vscode/
+.idea/
