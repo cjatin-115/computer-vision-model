@@ -1,6 +1,8 @@
 import { Activity } from "lucide-react";
 
-function Header() {
+function Header({ connected, system }) {
+  const online = connected && system.camera !== "OFFLINE";
+
   return (
     <header className="border-b border-slate-800 bg-[#0d131c]">
 
@@ -30,12 +32,12 @@ function Header() {
 
         <div className="flex items-center gap-3">
 
-          <div className="flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2">
+          <div className={`flex items-center gap-2 rounded-full border px-4 py-2 ${online ? "border-emerald-500/20 bg-emerald-500/10" : "border-amber-500/20 bg-amber-500/10"}`}>
 
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className={`h-2 w-2 rounded-full ${online ? "bg-emerald-400" : "bg-amber-400"}`} />
 
-            <span className="text-xs font-medium text-emerald-400">
-              SYSTEM ONLINE
+            <span className={`text-xs font-medium ${online ? "text-emerald-400" : "text-amber-400"}`}>
+              {online ? "SYSTEM ONLINE" : "CONNECTING"}
             </span>
 
           </div>

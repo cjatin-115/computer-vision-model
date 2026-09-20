@@ -10,6 +10,8 @@ export function Step({ step }) {
 
   const completed = step.status === "completed";
   const active = step.status === "active";
+  const skipped = step.status === "skipped";
+  const outOfSequence = step.status === "out_of_sequence";
 
   return (
     <div
@@ -26,6 +28,8 @@ export function Step({ step }) {
             ? "bg-emerald-500/15 text-emerald-400"
             : active
               ? "bg-blue-500/15 text-blue-400"
+              : skipped || outOfSequence
+                ? "bg-amber-500/15 text-amber-400"
               : "bg-slate-800 text-slate-500"
         }`}
       >
@@ -57,11 +61,7 @@ export function Step({ step }) {
 
         <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-600">
 
-          {completed
-            ? "Completed"
-            : active
-              ? "In progress"
-              : "Pending"}
+          {completed ? "Completed" : skipped ? "Skipped" : outOfSequence ? "Out of sequence" : active ? "In progress" : "Pending"}
 
         </p>
 

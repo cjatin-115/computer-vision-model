@@ -1,6 +1,5 @@
 import {
   Camera,
-  Video,
   Hand,
   Server,
   AlertTriangle,
@@ -12,32 +11,13 @@ import {
   ObjectTag,
   StatusRow,
 } from "./UIComponents";
+import { BACKEND_URL } from "../useBackendState";
 
 
-function DashboardPanels() {
-
-  const steps = [
-    {
-      id: 1,
-      name: "Pick up sample tube",
-      status: "completed",
-    },
-    {
-      id: 2,
-      name: "Place tube in rack",
-      status: "active",
-    },
-    {
-      id: 3,
-      name: "Retrieve tube from rack",
-      status: "pending",
-    },
-    {
-      id: 4,
-      name: "Return to rest position",
-      status: "pending",
-    },
-  ];
+function DashboardPanels({ state, connected }) {
+  const { system, perception, procedure, alert } = state;
+  const steps = procedure.steps || [];
+  const progress = procedure.total ? Math.round((procedure.completed / procedure.total) * 100) : 0;
 
 
   return (
@@ -64,11 +44,11 @@ function DashboardPanels() {
 
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-emerald-400">
+            <div className={`flex items-center gap-2 text-xs ${connected ? "text-emerald-400" : "text-amber-400"}`}>
 
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span className={`h-2 w-2 rounded-full ${connected ? "bg-emerald-400" : "bg-amber-400"}`} />
 
-              CAMERA CONNECTED
+              {system.camera || "STARTING"}
 
             </div>
 
@@ -76,23 +56,7 @@ function DashboardPanels() {
 
 
           <div className="aspect-video bg-black">
-
-            <div className="flex h-full flex-col items-center justify-center text-slate-600">
-
-              <Video
-                size={48}
-                strokeWidth={1.2}
-              />
-
-              <p className="mt-3 text-sm">
-                Live camera stream
-              </p>
-
-              <p className="mt-1 text-xs">
-                Waiting for backend connection...
-              </p>
-
-            </div>
+            <img className="h-full w-full object-contain" src={`${BACKEND_URL}/video`} alt="Live annotated camera stream" />
 
           </div>
 
@@ -119,7 +83,7 @@ function DashboardPanels() {
               </div>
 
               <span className="text-sm font-semibold text-blue-400">
-                25%
+                {progress}%
               </span>
 
             </div>
@@ -127,7 +91,7 @@ function DashboardPanels() {
 
             <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-800">
 
-              <div className="h-full w-1/4 rounded-full bg-blue-500" />
+              <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
 
             </div>
 
@@ -138,7 +102,7 @@ function DashboardPanels() {
 
             {steps.map((step) => (
               <Step
-                key={step.id}
+                key={step.name}
                 step={step}
               />
             ))}
@@ -178,23 +142,23 @@ function DashboardPanels() {
 
             <InfoBox
               label="HAND STATUS"
-              value="DETECTED"
-              positive
+              value={perception.hand_status || "STARTING"}
+              positive={perception.hand_status === "DETECTED"}
             />
 
             <InfoBox
               label="HAND NEAR"
-              value="CUP"
+              value={perception.hand_near || "NONE"}
             />
 
             <InfoBox
               label="CLOSEST OBJECT"
-              value="CUP"
+              value={perception.closest_object || "NONE"}
             />
 
             <InfoBox
               label="DISTANCE"
-              value="73 PX"
+              value={perception.distance == null ? "NONE" : `${Math.round(perception.distance)} PX`}
             />
 
           </div>
@@ -206,11 +170,11 @@ function DashboardPanels() {
               OBJECTS VISIBLE
             </p>
 
-            <div className="flex gap-2">
-
-              <ObjectTag name="Bottle" />
-
-              <ObjectTag name="Cup" />
+            <div className="flex flex-wrap gap-2">
+              {(perception.objects || []).map((objectName) => (
+                <ObjectTag key={objectName} name={objectName} />
+              ))}
+              {!perception.objects?.length && <span className="text-xs text-slate-600">No objects detected</span>}
 
             </div>
 
@@ -244,27 +208,27 @@ function DashboardPanels() {
 
             <StatusRow
               name="Camera"
-              status="ONLINE"
+              status={system.camera || "STARTING"}
             />
 
             <StatusRow
               name="YOLO Object Detection"
-              status="ACTIVE"
+              status={system.yolo || "STARTING"}
             />
 
             <StatusRow
               name="MediaPipe Hand Tracking"
-              status="ACTIVE"
+              status={system.hand_tracking || "STARTING"}
             />
 
             <StatusRow
               name="Step Sequence Engine"
-              status="ACTIVE"
+              status={system.step_engine || "STARTING"}
             />
 
             <StatusRow
               name="Local Recording"
-              status="RECORDING"
+              status={system.recording || "STARTING"}
             />
 
           </div>
@@ -296,17 +260,17 @@ function DashboardPanels() {
           <div>
 
             <p className="text-sm text-slate-300">
-              No active alerts
+              {alert.active ? alert.message : "No active alerts"}
             </p>
 
             <p className="mt-1 text-xs text-slate-500">
-              Procedure is currently being monitored.
+              {alert.active ? "Review the current procedure state." : "Procedure is currently being monitored."}
             </p>
 
           </div>
 
-          <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
-            NORMAL
+          <span className={`rounded-full px-3 py-1 text-xs ${alert.active ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400"}`}>
+            {alert.active ? alert.type.toUpperCase() : "NORMAL"}
           </span>
 
         </div>

@@ -1,23 +1,6 @@
 import { RotateCcw } from "lucide-react";
 
-function EventLog() {
-  const events = [
-    {
-      time: "23:41:02",
-      text: "System started. Waiting for step 1.",
-      type: "info",
-    },
-    {
-      time: "23:41:08",
-      text: "Pick up sample tube",
-      type: "success",
-    },
-    {
-      time: "23:41:14",
-      text: "Place tube in rack",
-      type: "success",
-    },
-  ];
+function EventLog({ events, onReset }) {
 
   return (
     <section className="rounded-xl border border-slate-800 bg-[#0d131c]">
@@ -37,6 +20,7 @@ function EventLog() {
 
         <button
           type="button"
+          onClick={onReset}
           className="flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800"
         >
           <RotateCcw size={14} />
@@ -50,9 +34,9 @@ function EventLog() {
         {events.map((event, index) => (
           <Event
             key={`${event.time}-${index}`}
-            time={event.time}
-            text={event.text}
-            type={event.type}
+            time={event.timestamp}
+            text={`${event.step_name}${event.note ? ` - ${event.note}` : ""}`}
+            type={event.status === "completed" ? "success" : event.status === "info" ? "info" : "warning"}
           />
         ))}
       </div>
