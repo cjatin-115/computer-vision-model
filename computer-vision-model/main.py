@@ -30,6 +30,7 @@ from src.step_engine import Step, StepSequenceEngine
 from src.voice_alert import VoiceAlert
 from src.gui import Dashboard
 from src import streamer
+from src.api import reset_state, update_state
 
 TUBE_OBJECTS = {"bottle", "cell phone", "remote", "book", "scissors", "toothbrush"}
 RACK_OBJECTS = {"cup", "mouse", "bowl", "keyboard"}
@@ -81,6 +82,8 @@ def main():
         voice.say("Sequence reset. Waiting for Step 1.")
 
     dashboard = Dashboard([s.name for s in steps], on_reset_callback=do_reset)
+    streamer.setup_api(do_reset)
+    reset_state(total_steps=len(steps))
     perception = Perception(yolo_weights="yolov8n.pt", target_classes=TARGET_CLASSES)
     recorder = None
 
@@ -94,6 +97,7 @@ def main():
         cap = cv2.VideoCapture(0)
 
     if not cap.isOpened():
+        update_state(system={"camera": "OFFLINE", "recording": "OFFLINE"})
         raise RuntimeError(
             "Could not open webcam (index 0). Try a different index (1, 2...) "
             "if you have multiple cameras."
@@ -102,6 +106,12 @@ def main():
     from src.streamer import LocalRecorder
     recorder = LocalRecorder(output_dir="recordings", fps=20,
                               frame_size=(int(cap.get(3)) or 640, int(cap.get(4)) or 480))
+    update_state(system={
+        "camera": "ONLINE",
+        "yolo": "ACTIVE",
+        "hand_tracking": "ACTIVE",
+        "recording": "RECORDING",
+    }, engine=engine)
 
     voice.say("Experiment monitoring started. Ready for step 1.")
     dashboard.log_event("System started. Waiting for step 1: " + steps[0].name)
@@ -140,6 +150,8 @@ def main():
                 elif event.status == "out_of_sequence":
                     nxt = engine.expected_step
                     voice.alert_out_of_sequence(event.step_name, nxt.name if nxt else None)
+
+            update_state(perception_state=perception_state, engine=engine)
 
             # Continuous spoken diagnostics when hand is in frame but action not completing
             if perception_state.get("hand_points") and not engine.is_finished():
